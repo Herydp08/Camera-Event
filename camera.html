@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Adhy & Destin - Disposable Camera</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&family=Fraunces:ital,wght@1,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8EFE4;
+    --panel: #FFF8EF;
+    --panel-2: #F3E4D6;
+    --border: #E6D3C3;
+    --ink: #5B4140;
+    --muted: #A58E88;
+    --accent: #B78483;
+    --accent-dark: #9A6A69;
+    --accent-soft: #EBD3CF;
+    --accent-glow: rgba(183, 132, 131, 0.38);
+    --shadow: rgba(120, 80, 70, 0.16);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { min-height: 100vh; background: var(--bg); color: var(--ink); font-family: 'DM Sans', system-ui, sans-serif; }
+  body { background: radial-gradient(120% 60% at 50% 0%, #FFF8EF 0%, var(--bg) 70%); background-attachment: fixed; }
+
+  .app { max-width: 440px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; padding: 16px; gap: 12px; position: relative; z-index: 1; }
+  header { display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; }
+  .brand h2 { font-family: 'Fraunces', serif; font-style: italic; font-size: 22px; color: var(--accent-dark); cursor: pointer; user-select: none; }
+  .brand p { font-size: 11px; color: var(--muted); letter-spacing: 0.3px; margin-top: 1px; }
+  .date-badge { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--accent); font-weight: 700; letter-spacing: 1px; background: var(--accent-soft); padding: 5px 10px; border-radius: 99px; }
+
+  .camera-box { background: var(--panel); border-radius: 28px; padding: 12px; border: 1px solid var(--border); box-shadow: 0 18px 36px var(--shadow); display: flex; flex-direction: column; gap: 12px; }
+  .viewfinder { position: relative; aspect-ratio: 3/4; border-radius: 20px; overflow: hidden; background: var(--panel-2); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; }
+
+  video { width: 100%; height: 100%; object-fit: cover; display: block; background: var(--panel-2); }
+  #preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; z-index: 2; }
+
+  .grain { position: absolute; inset: 0; pointer-events: none; opacity: 0.22; mix-blend-mode: overlay; z-index: 3; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence baseFrequency='.8' numOctaves='3'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.7'/></svg>"); }
+  .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 4; }
+  .flash.on { opacity: 1; transition: none; }
+
+  .lens-switcher { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; background: rgba(255, 248, 239, 0.82); backdrop-filter: blur(8px); border: 1px solid rgba(183,132,131,0.3); padding: 4px 8px; border-radius: 99px; gap: 6px; z-index: 5; }
+  .lens-btn { background: transparent; border: none; color: var(--muted); font: inherit; font-size: 12px; padding: 5px 12px; border-radius: 99px; cursor: pointer; transition: all 0.2s; }
+  .lens-btn.active { background: var(--accent); color: #fff; font-weight: 700; }
+
+  .control-panel { background: var(--panel-2); border-radius: 20px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); }
+  .btn-icon { width: 44px; height: 44px; border-radius: 50%; background: var(--panel); border: 1px solid var(--border); color: var(--accent-dark); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; transition: transform 0.1s, background 0.2s; }
+  .btn-icon:active { transform: scale(0.92); }
+  .btn-icon.active-flash { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+
+  .counter-badge { width: 54px; height: 54px; border-radius: 50%; background: var(--panel); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: default; }
+  .counter-num { font-family: 'Space Mono', monospace; font-size: 16px; font-weight: 700; color: var(--accent); line-height: 1; }
+  .counter-lbl { font-size: 9px; color: var(--muted); margin-top: 2px; }
+
+  .shutter-main { width: 72px; height: 72px; border-radius: 50%; border: 3px solid #FFF8EF; background: radial-gradient(circle at 35% 30%, #D3A5A3, var(--accent) 60%, #94615F); box-shadow: 0 0 0 2px var(--accent-soft), 0 5px 0 #8A5755, 0 8px 20px var(--accent-glow); cursor: pointer; transition: transform 0.1s; }
+  .shutter-main:active { transform: translateY(3px); box-shadow: 0 0 0 2px var(--accent-soft), 0 2px 0 #8A5755; }
+  .shutter-main:disabled { filter: grayscale(1); opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+  /* Pesan & kesan (muncul setelah jepret) */
+  .message-panel { display: none; flex-direction: column; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 20px; padding: 14px; }
+  .message-panel label { font-family: 'Fraunces', serif; font-style: italic; font-size: 17px; color: var(--accent-dark); }
+  .message-panel .hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .message-panel textarea { width: 100%; min-height: 96px; resize: none; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--panel); color: var(--ink); font: inherit; font-size: 14px; line-height: 1.5; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+  .message-panel textarea::placeholder { color: #C2AFA9; }
+  .message-panel textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .message-panel textarea.invalid { border-color: #C96B6B; box-shadow: 0 0 0 3px rgba(201,107,107,0.2); }
+  .char-count { align-self: flex-end; font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted); }
+
+  .actions { display: none; gap: 10px; }
+  .actions button { flex: 1; padding: 14px; border-radius: 14px; border: none; font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; transition: transform 0.1s; }
+  .actions button:active { transform: scale(0.98); }
+  .actions button:disabled { opacity: 0.6; cursor: wait; }
+  .retake { background: var(--panel); color: var(--accent-dark); border: 1px solid var(--border) !important; }
+  .save { background: var(--accent); color: #fff; box-shadow: 0 4px 15px var(--accent-glow); }
+
+  .status { text-align: center; font-size: 12px; color: var(--accent-dark); min-height: 18px; }
+
+  .modal { position: fixed; inset: 0; background: rgba(91,65,64,0.45); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 99; }
+  .card { background: var(--panel); padding: 24px; border-radius: 24px; width: 100%; max-width: 340px; text-align: center; border: 1px solid var(--border); box-shadow: 0 20px 40px var(--shadow); }
+  .card h2 { font-family: 'Fraunces', serif; font-style: italic; font-size: 24px; margin-bottom: 6px; color: var(--accent-dark); }
+  .card p { font-size: 12px; color: var(--muted); margin-bottom: 16px; line-height: 1.6; }
+  .card input, .card select { width: 100%; margin-bottom: 16px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); background: #fff; color: var(--ink); font: inherit; outline: none; }
+  .card input:focus, .card select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .card button { width: 100%; padding: 12px; border-radius: 12px; border: none; background: var(--accent); color: #fff; font: inherit; font-weight: 700; cursor: pointer; box-shadow: 0 4px 15px var(--accent-glow); }
+  .card .btn-secondary { background: var(--border); color: var(--accent-dark); margin-top: 8px; box-shadow: none; }
+
+  #camStartOverlay { position: absolute; inset: 0; background: rgba(248,239,228,0.92); z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 20px; text-align: center; }
+  #camStartOverlay button { padding: 10px 18px; background: var(--accent); border: none; border-radius: 99px; color: #fff; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+
+  /* ===== v2: tampilan ala kamera iPhone ===== */
+  .viewfinder { container-type: inline-size; touch-action: manipulation; }
+  .viewfinder video { transform-origin: center; transition: transform .25s ease; }
+  .fx { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+  #fxTint { mix-blend-mode: soft-light; }
+  .grid { display: none; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+    background:
+      linear-gradient(to right, transparent calc(33.33% - .5px), rgba(255,255,255,.5) 0, rgba(255,255,255,.5) calc(33.33% + .5px), transparent 0, transparent calc(66.66% - .5px), rgba(255,255,255,.5) 0, rgba(255,255,255,.5) calc(66.66% + .5px), transparent 0),
+      linear-gradient(to bottom, transparent calc(33.33% - .5px), rgba(255,255,255,.5) 0, rgba(255,255,255,.5) calc(33.33% + .5px), transparent 0, transparent calc(66.66% - .5px), rgba(255,255,255,.5) 0, rgba(255,255,255,.5) calc(66.66% + .5px), transparent 0); }
+  .frame { display: none; position: absolute; inset: 0; z-index: 4; pointer-events: none; border: solid #FFF8EF; border-width: 5cqw 5cqw 17cqw; }
+  .frame .cap { position: absolute; left: 0; right: 0; top: 100%; height: 17cqw; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .frame b { font-family: 'Fraunces', serif; font-style: italic; font-weight: 600; font-size: 6cqw; color: var(--accent); }
+  .frame i { font-family: 'Space Mono', monospace; font-style: normal; font-size: 3cqw; color: var(--muted); margin-top: 1cqw; }
+  .topbar { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; z-index: 7; }
+  .tb { width: 38px; height: 38px; font-size: 14px; background: rgba(255,248,239,.82); backdrop-filter: blur(8px); border-color: rgba(183,132,131,.3); font-family: inherit; font-weight: 700; text-decoration: none; }
+  .tb.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .zoom-bar { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; padding: 4px; background: rgba(255,248,239,.7); backdrop-filter: blur(8px); border-radius: 99px; z-index: 7; }
+  .zbtn { width: 34px; height: 34px; border-radius: 50%; border: none; background: transparent; color: var(--accent-dark); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .zbtn.active { background: var(--accent); color: #fff; }
+  .viewfinder.shot .fx, .viewfinder.shot .grid, .viewfinder.shot .frame, .viewfinder.shot .topbar, .viewfinder.shot .zoom-bar, .viewfinder.shot .grain { display: none !important; }
+  #preview { z-index: 6; }
+  #countdown { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 8; pointer-events: none; font-family: 'Fraunces', serif; font-style: italic; font-size: 120px; color: #fff; text-shadow: 0 4px 24px rgba(91,65,64,.55); }
+  .focus-ring { position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px; border: 1.5px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px rgba(183,132,131,.5); opacity: 0; pointer-events: none; z-index: 7; }
+  .focus-ring.go { animation: focusring 1.1s ease; }
+  @keyframes focusring { 0% { transform: scale(1.5); opacity: 1; } 70% { transform: scale(1); opacity: 1; } 100% { opacity: 0; } }
+  .fx-panel { display: flex; flex-direction: column; gap: 8px; }
+  .fstrip { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: none; }
+  .fstrip::-webkit-scrollbar { display: none; }
+  .fbtn { flex: 0 0 auto; padding: 8px 14px; border-radius: 99px; border: 1px solid var(--border); background: var(--panel); color: var(--accent-dark); font: inherit; font-size: 12px; cursor: pointer; transition: all .2s; }
+  .fbtn.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; box-shadow: 0 3px 10px var(--accent-glow); }
+  .toggles { display: flex; gap: 8px; }
+  .tgl { flex: 1; padding: 9px; border-radius: 12px; border: 1px solid var(--border); background: var(--panel); color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; }
+  .tgl.active { background: var(--accent-soft); color: var(--accent-dark); border-color: var(--accent); font-weight: 700; }
+  .shutter-main { width: 76px; height: 76px; border: 4px solid #fff; background: var(--accent); box-shadow: 0 0 0 3px var(--accent), 0 6px 18px var(--accent-glow); }
+  .shutter-main:active { transform: scale(.92); box-shadow: 0 0 0 3px var(--accent), 0 2px 8px var(--accent-glow); }
+  .control-panel { padding: 12px 20px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <h2 id="adminTrigger" title="Klik 3x untuk Panel Admin">Adhy & Destin</h2>
+      <p>Disposable Digital Camera</p>
+    </div>
+    <div class="date-badge" id="liveDate">-- -- --</div>
+  </header>
+
+  <div class="camera-box">
+    <div class="viewfinder" id="vf">
+      <video id="video" autoplay playsinline muted></video>
+      <img id="preview" alt="Preview Foto">
+      <div class="fx" id="fxTint"></div>
+      <div class="fx" id="fxVig"></div>
+      <div class="grain" id="grain"></div>
+      <div class="grid" id="gridOv"></div>
+      <div class="frame" id="frameOv"><div class="cap"><b>Adhy & Destin</b><i id="frameDate"></i></div></div>
+      <div class="flash" id="flash"></div>
+      <div class="topbar">
+        <button class="btn-icon tb" id="flashBtn" title="Senter">⚡</button>
+        <button class="btn-icon tb" id="timerBtn" title="Timer">⏱</button>
+        <button class="btn-icon tb" id="gridBtn" title="Garis bantu">#</button>
+        <button class="btn-icon tb" id="flipBtn" title="Putar Kamera">⟲</button>
+      </div>
+      <div class="zoom-bar" id="zoomBar"></div>
+      <div id="countdown"></div>
+      <div class="focus-ring" id="focusRing"></div>
+
+      <div id="camStartOverlay" style="display:none;">
+        <span style="font-size:11px; color:var(--muted);">Kamera membutuhkan izin aktif</span>
+        <button id="manualStartBtn">Aktifkan Kamera 📷</button>
+      </div>
+    </div>
+
+    <div class="fx-panel" id="filters">
+      <div class="fstrip" id="fstrip"></div>
+      <div class="toggles">
+        <button class="tgl active" id="tglStamp">📅 Cap Tanggal</button>
+        <button class="tgl" id="tglFrame">🖼 Bingkai Pernikahan</button>
+      </div>
+    </div>
+
+    <div class="control-panel" id="controls">
+      <a class="btn-icon" href="gallery.html" style="text-decoration:none;" title="Lihat Galeri">▦</a>
+      <button class="shutter-main" id="shutter" title="Jepret Foto"></button>
+      <div class="counter-badge" title="Sisa Jepretan">
+        <span class="counter-num" id="counterNum">--</span>
+        <span class="counter-lbl">Sisa</span>
+      </div>
+    </div>
+
+    <div class="message-panel" id="messagePanel">
+      <label for="messageInput">Pesan & Kesan</label>
+      <p class="hint">Tulis ucapan atau kesan kamu untuk Adhy & Destin. Akan tampil bersama foto ini di galeri.</p>
+      <textarea id="messageInput" maxlength="200" placeholder="Selamat ya! Semoga bahagia selalu..."></textarea>
+      <span class="char-count" id="charCount">0/200</span>
+    </div>
+
+    <div class="actions" id="actions">
+      <button class="retake" id="retake">Ulangi</button>
+      <button class="save" id="save">Simpan & Upload</button>
+    </div>
+  </div>
+  <div class="status" id="status"></div>
+</div>
+
+<div class="modal" id="nameModal" style="display:none">
+  <div class="card">
+    <h2>Momen Spesial</h2>
+    <p>Silakan masukkan nama kamu sebelum mengabadikan momen 📸</p>
+    <input id="nameInput" placeholder="Nama / Panggilan kamu" maxlength="40">
+    <button id="nameBtn">Mulai Kamera</button>
+  </div>
+</div>
+
+<div class="modal" id="adminModal" style="display:none">
+  <div class="card">
+    <h2>Panel Admin</h2>
+    <p id="adminDesc">Masukkan PIN admin (1234):</p>
+    <div id="adminLoginArea">
+      <input type="password" id="adminPin" placeholder="PIN Admin">
+      <button id="adminLoginBtn">Masuk</button>
+      <button class="btn-secondary" id="closeAdminLogin">Batal</button>
+    </div>
+    <div id="adminControlArea" style="display:none; text-align:left;">
+      <label style="font-size:11px; color:var(--muted);">Batas Maksimal Jepretan (Global):</label>
+      <select id="maxPhotoSelect" style="margin-top:6px;">
+        <option value="7">7 Foto</option>
+        <option value="8">8 Foto</option>
+        <option value="10">10 Foto</option>
+        <option value="12">12 Foto</option>
+        <option value="15" selected>15 Foto</option>
+      </select>
+      <button id="resetQuotaBtn" style="background:#B78483; margin-top:8px;">Simpan Pengaturan</button>
+      <button id="resetLocalUsedBtn" style="background:#C96B6B; margin-top:8px;">Reset Kuota HP Ini</button>
+      <button class="btn-secondary" id="closeAdminControl">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<canvas id="canvas" style="display:none"></canvas>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzyyRyNx3NFHa5UNwcRgSUW2iTL8l6FLFoenCAP05l1cRW8i6vf1COi4x0GLMl7Rvzz/exec";
+
+const CFG = {
+  cloud: "rfth8pyv",
+  preset: "disposable-camera",
+  folder: "disposable-camera"
+};
+
+let maxPhotos = 15;
+let used = 0;
+
+// b=brightness c=contrast s=saturate sep=sepia g=grayscale | tint=[warna,kekuatan] vig=vignette grain glow
+const FILTERS = {
+  normal:    { label:'Asli',         b:1,    c:1,    s:1,    sep:0,   g:0, tint:null,            vig:0,   grain:.08, glow:0 },
+  vivid:     { label:'Vivid',        b:1.03, c:1.12, s:1.32, sep:0,   g:0, tint:null,            vig:0,   grain:.08, glow:0 },
+  vividWarm: { label:'Vivid Hangat', b:1.03, c:1.1,  s:1.25, sep:0,   g:0, tint:['#ffa86b',.35],  vig:0,   grain:.08, glow:0 },
+  vividCool: { label:'Vivid Sejuk',  b:1.03, c:1.1,  s:1.25, sep:0,   g:0, tint:['#6fa4ff',.3],   vig:0,   grain:.08, glow:0 },
+  blush:     { label:'Blush 💗',     b:1.06, c:.95,  s:1.05, sep:0,   g:0, tint:['#B78483',.5],   vig:.18, grain:.1,  glow:.25 },
+  dreamy:    { label:'Dreamy ✨',    b:1.1,  c:.88,  s:1.05, sep:0,   g:0, tint:['#ffe3dc',.45],  vig:.1,  grain:.06, glow:.45 },
+  golden:    { label:'Golden Hour',  b:1.05, c:1.08, s:1.2,  sep:.15, g:0, tint:['#ffbe70',.45],  vig:.2,  grain:.1,  glow:.1 },
+  film:      { label:'Film 90s',     b:1.02, c:1.1,  s:1.25, sep:.3,  g:0, tint:['#ff9d7a',.25],  vig:.3,  grain:.3,  glow:0 },
+  dramatic:  { label:'Dramatic',     b:.95,  c:1.35, s:.9,   sep:0,   g:0, tint:null,            vig:.35, grain:.12, glow:0 },
+  silver:    { label:'Silvertone',   b:1.08, c:1.0,  s:1,    sep:0,   g:1, tint:null,            vig:.1,  grain:.15, glow:.15 },
+  noir:      { label:'Noir',         b:.95,  c:1.5,  s:1,    sep:0,   g:1, tint:null,            vig:.35, grain:.3,  glow:0 }
+};
+
+const $ = id => document.getElementById(id);
+let current = 'normal', facing = 'environment', stream = null, blob = null, busy = false, torchOn = false;
+
+const today = new Date();
+const dd = String(today.getDate()).padStart(2, '0');
+const mm = String(today.getMonth() + 1).padStart(2, '0');
+const yy = String(today.getFullYear()).slice(2);
+$('liveDate').textContent = `${dd} ${mm} '${yy}`;
+
+let guestId = localStorage.getItem('ddc_gid');
+if (!guestId) { 
+  guestId = 'g_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); 
+  localStorage.setItem('ddc_gid', guestId); 
+}
+let guestName = localStorage.getItem('ddc_name');
+
+async function syncConfig() {
+  try {
+    const res = await fetch(API_URL + '?action=getConfig');
+    const data = await res.json();
+    if (data.maxPhotos) maxPhotos = Number(data.maxPhotos);
+  } catch(e) {
+    maxPhotos = Number(localStorage.getItem('ddc_max') || 15);
+  }
+  used = Number(localStorage.getItem('ddc_used') || 0);
+  updateCounter();
+}
+
+function updateCounter(){
+  const rem = Math.max(0, maxPhotos - used);
+  $('counterNum').textContent = rem;
+  $('shutter').disabled = rem <= 0;
+}
+
+function status(t){ $('status').textContent = t; }
+
+const cssFilter = F => `brightness(${F.b}) contrast(${F.c}) saturate(${F.s}) sepia(${F.sep}) grayscale(${F.g})`;
+let frameOn = false, stampOn = true, gridOn = false, timerSec = 0, counting = false, cdTimer = null, zoomD = 1, hwZoom = null;
+$('frameDate').textContent = `${dd} ${mm} '${yy}`;
+
+Object.entries(FILTERS).forEach(([k,f])=>{
+  const b = document.createElement('button');
+  b.className = 'fbtn' + (k === current ? ' active' : '');
+  b.textContent = f.label; b.dataset.k = k;
+  b.onclick = ()=>{
+    current = k;
+    document.querySelectorAll('.fbtn').forEach(x=>x.classList.toggle('active', x.dataset.k === k));
+    b.scrollIntoView({ inline:'center', block:'nearest', behavior:'smooth' });
+    applyFilter();
+  };
+  $('fstrip').appendChild(b);
+});
+
+function applyFilter(){
+  const F = FILTERS[current];
+  $('video').style.filter = cssFilter(F);
+  $('grain').style.opacity = F.grain * 2;
+  $('fxTint').style.background = F.tint ? F.tint[0] : 'transparent';
+  $('fxTint').style.opacity = F.tint ? F.tint[1] : 0;
+  $('fxVig').style.background = F.vig ? `radial-gradient(ellipse at center, transparent 50%, rgba(60,30,30,${F.vig * 1.7}) 135%)` : 'none';
+}
+
+$('tglStamp').onclick = e => { stampOn = !stampOn; e.currentTarget.classList.toggle('active', stampOn); $('frameDate').style.display = stampOn ? '' : 'none'; };
+$('tglFrame').onclick = e => { frameOn = !frameOn; e.currentTarget.classList.toggle('active', frameOn); $('frameOv').style.display = frameOn ? 'block' : 'none'; };
+$('gridBtn').onclick = e => { gridOn = !gridOn; e.currentTarget.classList.toggle('on', gridOn); $('gridOv').style.display = gridOn ? 'block' : 'none'; };
+$('timerBtn').onclick = e => { timerSec = timerSec === 0 ? 3 : timerSec === 3 ? 10 : 0; e.currentTarget.textContent = timerSec ? timerSec + 's' : '⏱'; e.currentTarget.classList.toggle('on', !!timerSec); };
+
+$('vf').addEventListener('click', e => {
+  if (e.target.closest('button') || $('vf').classList.contains('shot')) return;
+  const r = $('vf').getBoundingClientRect(), f = $('focusRing');
+  f.style.left = (e.clientX - r.left) + 'px'; f.style.top = (e.clientY - r.top) + 'px';
+  f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+});
+
+/* ---- Zoom: hardware (kalau didukung HP) atau digital ---- */
+function applyTransform(){ $('video').style.transform = `scale(${facing === 'user' ? -zoomD : zoomD}, ${zoomD})`; }
+function markZoom(z){ document.querySelectorAll('.zbtn').forEach(x => x.classList.toggle('active', Number(x.dataset.z) === z)); }
+async function setZoom(z){
+  const tr = stream && stream.getVideoTracks()[0];
+  zoomD = Math.max(z, 1);
+  if (hwZoom && tr) {
+    try { await tr.applyConstraints({ advanced: [{ zoom: Math.min(Math.max(z, hwZoom.min), hwZoom.max) }] }); zoomD = 1; } catch(e) {}
+  }
+  applyTransform(); markZoom(z);
+}
+function initZoom(){
+  zoomD = 1; hwZoom = null;
+  const tr = stream.getVideoTracks()[0];
+  const caps = tr.getCapabilities ? tr.getCapabilities() : {};
+  if (caps.zoom) hwZoom = { min: caps.zoom.min, max: caps.zoom.max };
+  const opts = (hwZoom && hwZoom.min <= 0.55) ? [0.5, 1, 2] : [1, 2];
+  $('zoomBar').innerHTML = '';
+  opts.forEach(z => {
+    const b = document.createElement('button');
+    b.className = 'zbtn'; b.dataset.z = z; b.textContent = (z === 0.5 ? '.5' : z) + '×';
+    b.onclick = () => setZoom(z);
+    $('zoomBar').appendChild(b);
+  });
+  markZoom(1); applyTransform();
+}
+
+async function startCamera(){
+  if (stream) { 
+    stream.getTracks().forEach(t => t.stop()); 
+  }
+  
+  const constraints = [
+    { video: { facingMode: { exact: facing }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
+    { video: { facingMode: facing, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
+    { video: true, audio: false }
+  ];
+
+  for (let constraint of constraints) {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(constraint);
+      const videoElement = $('video');
+      videoElement.srcObject = stream;
+      await videoElement.play();
+      initZoom();
+      $('camStartOverlay').style.display = 'none';
+      status('');
+      return;
+    } catch(e) {
+      console.warn("Fallback camera error:", e);
+    }
+  }
+  
+  $('camStartOverlay').style.display = 'flex';
+  status('Ketuk tombol di atas untuk mengaktifkan kamera.');
+}
+
+$('manualStartBtn').onclick = () => { startCamera(); };
+
+$('flipBtn').onclick = ()=>{ 
+  facing = facing === 'user' ? 'environment' : 'user'; 
+  torchOn = false;
+  $('flashBtn').classList.remove('active-flash');
+  startCamera(); 
+};
+
+$('flashBtn').onclick = async () => {
+  if (!stream) return;
+  const track = stream.getVideoTracks()[0];
+  const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+  if (!capabilities.torch) { alert('Senter tidak didukung perangkat ini.'); return; }
+  try {
+    torchOn = !torchOn;
+    await track.applyConstraints({ advanced: [{ torch: torchOn }] });
+    $('flashBtn').classList.toggle('active-flash', torchOn);
+  } catch (err) { status('Gagal mengubah mode senter.'); }
+};
+
+function playShutterSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(120, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.08);
+  } catch(e) {}
+}
+
+function pixelFilter(ctx, W, H, F){
+  const d = ctx.getImageData(0, 0, W, H), p = d.data, a = 1 - F.sep, gr = 1 - F.g, o = [0, 0, 0];
+  const cl = v => v < 0 ? 0 : v > 255 ? 255 : v;
+  const sat = (r, g, b, s) => {
+    o[0] = cl((.213+.787*s)*r + (.715-.715*s)*g + (.072-.072*s)*b);
+    o[1] = cl((.213-.213*s)*r + (.715+.285*s)*g + (.072-.072*s)*b);
+    o[2] = cl((.213-.213*s)*r + (.715-.715*s)*g + (.072+.928*s)*b);
+  };
+  for (let i = 0; i < p.length; i += 4) {
+    let r = cl(p[i]*F.b), g = cl(p[i+1]*F.b), b = cl(p[i+2]*F.b);
+    r = cl((r-127.5)*F.c+127.5); g = cl((g-127.5)*F.c+127.5); b = cl((b-127.5)*F.c+127.5);
+    sat(r, g, b, F.s); r = o[0]; g = o[1]; b = o[2];
+    if (F.sep) {
+      const R = cl((.393+.607*a)*r + (.769-.769*a)*g + (.189-.189*a)*b);
+      const G = cl((.349-.349*a)*r + (.686+.314*a)*g + (.168-.168*a)*b);
+      const B = cl((.272-.272*a)*r + (.534-.534*a)*g + (.131+.869*a)*b);
+      r = R; g = G; b = B;
+    }
+    if (F.g) { sat(r, g, b, gr); r = o[0]; g = o[1]; b = o[2]; }
+    p[i] = r; p[i+1] = g; p[i+2] = b;
+  }
+  ctx.putImageData(d, 0, 0);
+}
+
+function takePhoto(){
+  const v = $('video');
+  if (!v.videoWidth) return;
+  playShutterSound();
+  $('flash').classList.add('on');
+  setTimeout(() => $('flash').classList.remove('on'), 80);
+
+  const F = FILTERS[current], c = $('canvas'), ctx = c.getContext('2d');
+  const W = 1080, H = 1440;               // rasio 3:4 = sama dengan viewfinder
+  c.width = W; c.height = H;
+
+  // Crop "cover" yang sama persis seperti preview (tidak ada lagi zoom tiba-tiba)
+  const vw = v.videoWidth, vh = v.videoHeight, ratio = W / H;
+  let sw = vw, sh = vh;
+  if (vw / vh > ratio) sw = vh * ratio; else sh = vw / ratio;
+  sw /= zoomD; sh /= zoomD;
+  const sx = (vw - sw) / 2, sy = (vh - sh) / 2;
+
+  ctx.save();
+  if (facing === 'user') { ctx.translate(W, 0); ctx.scale(-1, 1); }
+  ctx.drawImage(v, sx, sy, sw, sh, 0, 0, W, H);
+  ctx.restore();
+
+  pixelFilter(ctx, W, H, F);              // berjalan di semua HP (termasuk iPhone/Safari)
+
+  if (F.tint) {
+    ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = F.tint[1];
+    ctx.fillStyle = F.tint[0]; ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  }
+  if (F.glow) {                           // efek soft glow / dreamy
+    const t = document.createElement('canvas'); t.width = W / 10; t.height = H / 10;
+    t.getContext('2d').drawImage(c, 0, 0, t.width, t.height);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = F.glow;
+    ctx.drawImage(t, 0, 0, W, H);
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  }
+  if (F.vig) {
+    const gdt = ctx.createRadialGradient(W/2, H/2, Math.min(W, H) * .3, W/2, H/2, Math.hypot(W, H) / 2);
+    gdt.addColorStop(0, 'rgba(60,30,30,0)'); gdt.addColorStop(1, `rgba(60,30,30,${F.vig * 1.7})`);
+    ctx.fillStyle = gdt; ctx.fillRect(0, 0, W, H);
+  }
+  if (F.grain) {
+    const n = document.createElement('canvas'); n.width = n.height = 256;
+    const nc = n.getContext('2d'), id = nc.createImageData(256, 256);
+    for (let i = 0; i < id.data.length; i += 4) { id.data[i] = id.data[i+1] = id.data[i+2] = Math.random() * 255; id.data[i+3] = 255; }
+    nc.putImageData(id, 0, 0);
+    ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = Math.min(F.grain * 1.6, 1);
+    ctx.fillStyle = ctx.createPattern(n, 'repeat'); ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  }
+
+  ctx.shadowBlur = 0;
+  const dateTxt = `${dd} ${mm} '${yy}`;
+  if (frameOn) {                          // bingkai polaroid pernikahan
+    const bs = W * .05, bb = W * .17;
+    ctx.fillStyle = '#FFF8EF';
+    ctx.fillRect(0, 0, W, bs); ctx.fillRect(0, 0, bs, H); ctx.fillRect(W - bs, 0, bs, H); ctx.fillRect(0, H - bb, W, bb);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#B78483'; ctx.font = `italic 600 ${W * .06}px Fraunces, serif`;
+    ctx.fillText('Adhy & Destin', W / 2, H - bb / 2 - (stampOn ? W * .012 : 0));
+    if (stampOn) { ctx.fillStyle = '#A58E88'; ctx.font = `${W * .03}px "Space Mono", monospace`; ctx.fillText(dateTxt, W / 2, H - bb / 2 + W * .042); }
+    ctx.textBaseline = 'alphabetic';
+  } else if (stampOn) {
+    ctx.font = `bold ${W * .038}px "Space Mono", monospace`;
+    ctx.fillStyle = '#F7D9CC';
+    ctx.shadowColor = 'rgba(91,65,64,0.8)'; ctx.shadowBlur = 4;
+    ctx.textAlign = 'right';
+    ctx.fillText(dateTxt, W - 40, H - 40);
+    ctx.shadowBlur = 0;
+  }
+
+  const done = b => {
+    blob = b;
+    $('preview').src = URL.createObjectURL(b);
+    $('preview').style.display = 'block'; $('vf').classList.add('shot');
+    $('controls').style.display = 'none'; $('filters').style.display = 'none';
+    $('messagePanel').style.display = 'flex'; $('actions').style.display = 'flex';
+    $('messageInput').value = ''; updateCharCount();
+    status('Tulis pesan & kesan kamu dulu ya ✍️');
+  };
+  // WebP kualitas 0.82 (jauh lebih kecil). Safari lama tidak bisa encode WebP -> otomatis pakai JPEG 0.82
+  c.toBlob(b => {
+    if (b && b.type === 'image/webp') done(b);
+    else c.toBlob(done, 'image/jpeg', 0.82);
+  }, 'image/webp', 0.82);
+}
+
+$('shutter').onclick = () => {
+  if (used >= maxPhotos) return;
+  if (counting) { clearInterval(cdTimer); counting = false; $('countdown').textContent = ''; return; }
+  if (!timerSec) return takePhoto();
+  let n = timerSec; counting = true; $('countdown').textContent = n;
+  cdTimer = setInterval(() => {
+    n--;
+    if (n <= 0) { clearInterval(cdTimer); counting = false; $('countdown').textContent = ''; takePhoto(); }
+    else $('countdown').textContent = n;
+  }, 1000);
+};
+
+function updateCharCount(){
+  $('charCount').textContent = $('messageInput').value.length + '/200';
+}
+$('messageInput').addEventListener('input', () => {
+  $('messageInput').classList.remove('invalid');
+  updateCharCount();
+});
+
+function resetView(){
+  blob = null; $('vf').classList.remove('shot');
+  $('preview').style.display = 'none';$('controls').style.display = 'flex'; 
+  $('messagePanel').style.display = 'none';
+  $('messageInput').value = ''; $('messageInput').classList.remove('invalid');
+  $('actions').style.display = 'none';$('filters').style.display = 'flex';
+  status('');
+}
+$('retake').onclick = resetView;
+
+$('save').onclick = async ()=>{
+  if (!blob || busy) return; 
+  const message = $('messageInput').value.trim();
+  if (!message) {
+    $('messageInput').classList.add('invalid');
+    $('messageInput').focus();
+    status('Pesan & kesan wajib diisi sebelum upload.');
+    return;
+  }
+  busy = true; 
+  $('save').disabled = true; 
+  status('Mengunggah foto...');
+  
+  try {
+    const fd = new FormData();
+    fd.append('file', blob); 
+    fd.append('upload_preset', CFG.preset);
+    fd.append('folder', CFG.folder); 
+    fd.append('tags', guestId);
+    
+    const r = await fetch('https://api.cloudinary.com/v1_1/' + CFG.cloud + '/image/upload', { method: 'POST', body: fd });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error ? j.error.message : 'Gagal upload');
+    
+    const queryParams = new URLSearchParams({
+      action: 'save', guestId, guestName, filter: current, message,
+      imageUrl: j.secure_url, publicId: j.public_id, width: j.width, height: j.height
+    });
+
+    await fetch(API_URL + '?' + queryParams.toString(), { method: 'GET', mode: 'no-cors' });
+    
+    busy = false; 
+    $('save').disabled = false;
+    used++; 
+    localStorage.setItem('ddc_used', used); 
+    updateCounter(); 
+    resetView();
+    status('Tersimpan ke galeri! ✓');
+    setTimeout(() => status(''), 3000);
+  } catch(e){ 
+    busy = false; 
+    $('save').disabled = false; 
+    status('Error: ' + e.message); 
+  }
+};
+
+let adminClicks = 0;
+$('adminTrigger').onclick = () => {
+  adminClicks++;
+  setTimeout(() => { adminClicks = 0; }, 1200);
+  if (adminClicks >= 3) {
+    adminClicks = 0;
+    $('adminModal').style.display = 'flex';$('adminLoginArea').style.display = 'block';
+    $('adminControlArea').style.display = 'none';$('adminPin').value = '';
+  }
+};
+
+$('adminLoginBtn').onclick = () => {
+  if ($('adminPin').value === '1234') {$('adminLoginArea').style.display = 'none';
+    $('adminControlArea').style.display = 'block';$('maxPhotoSelect').value = maxPhotos;
+  } else { alert('PIN Admin Salah!'); }
+};
+
+$('closeAdminLogin').onclick = () => {$('adminModal').style.display = 'none'; };
+$('closeAdminControl').onclick = () => {$('adminModal').style.display = 'none'; };
+
+$('resetQuotaBtn').onclick = async () => {
+  const newMax = $('maxPhotoSelect').value;
+  status('Memperbarui kuota...');
+  try {
+    const res = await fetch(`${API_URL}?action=adminReset&pin=1234&maxPhotos=${newMax}`);
+    const result = await res.json();
+    if (result.status === 'success') {
+      maxPhotos = Number(newMax);
+      localStorage.setItem('ddc_max', maxPhotos);
+      updateCounter();
+      alert('Kuota global berhasil disimpan: ' + maxPhotos + ' foto.');
+      $('adminModal').style.display = 'none';
+      status('');
+    } else { alert('Gagal: ' + result.message); }
+  } catch(err) { alert('Terjadi kesalahan koneksi.'); }
+};
+
+$('resetLocalUsedBtn').onclick = () => {
+  localStorage.setItem('ddc_used', 0);
+  used = 0;
+  updateCounter();
+  alert('Kuota HP ini berhasil di-reset.');
+  $('adminModal').style.display = 'none';
+};
+
+syncConfig();
+applyFilter();
+
+if (!guestName){ 
+  $('nameModal').style.display = 'flex'; 
+} else { 
+  startCamera(); 
+}
+
+$('nameBtn').onclick = ()=>{ 
+  guestName = $('nameInput').value.trim() || 'Tamu Kehormatan'; 
+  localStorage.setItem('ddc_name', guestName); 
+  $('nameModal').style.display = 'none'; 
+  startCamera();
+};
+</script>
+</body>
+</html>

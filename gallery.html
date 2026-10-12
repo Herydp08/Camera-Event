@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Galeri Foto - Adhy &amp; Destin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#f7f0e4;
+  --cream-2:#efe4d0;
+  --paper:#fffaf1;
+  --ink:#4b3f33;
+  --muted:#9a8b78;
+  --gold:#b8935a;
+  --gold-soft:rgba(184,147,90,.35);
+  --water:rgba(196,170,128,.22);
+  --ease:cubic-bezier(.22,1,.36,1);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Jost',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--cream)}
+body{
+  min-height:100vh;color:var(--ink);font-family:var(--sans);font-weight:300;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 0%,#fffaf0 0%,transparent 70%),
+    linear-gradient(180deg,var(--cream) 0%,var(--cream-2) 100%);
+  background-attachment:fixed;
+}
+/* riak air di latar */
+body::before{
+  content:"";position:fixed;inset:-20%;z-index:0;pointer-events:none;opacity:.55;
+  background:
+    repeating-radial-gradient(circle at 20% 25%,transparent 0 46px,var(--water) 47px 48px),
+    repeating-radial-gradient(circle at 82% 70%,transparent 0 62px,var(--water) 63px 64px);
+  animation:drift 22s ease-in-out infinite alternate;
+}
+@keyframes drift{from{transform:translate3d(-2%,-1%,0) scale(1)}to{transform:translate3d(2%,2%,0) scale(1.06)}}
+
+.app{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:22px 16px 70px}
+
+/* ---------- Header ---------- */
+header{text-align:center;padding:46px 0 38px;position:relative}
+.back-btn{
+  position:absolute;top:0;left:0;display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:99px;
+  background:rgba(255,250,241,.8);border:1px solid var(--gold-soft);color:var(--ink);text-decoration:none;
+  font-size:10px;letter-spacing:.22em;text-transform:uppercase;font-weight:400;backdrop-filter:blur(6px);
+  transition:background .4s var(--ease),transform .4s var(--ease);
+}
+.back-btn:hover{background:#fff;transform:translateX(-2px)}
+.eyebrow{font-size:10px;letter-spacing:.42em;text-transform:uppercase;color:var(--gold);font-weight:400;margin-top:34px}
+.title{font-family:var(--serif);font-weight:500;font-size:clamp(44px,13vw,60px);line-height:1;margin-top:14px;color:var(--ink)}
+.title i{color:var(--gold);font-weight:400}
+.sub{margin-top:14px;font-size:12px;line-height:1.9;color:var(--muted);letter-spacing:.04em}
+.ornament{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:24px;color:var(--gold)}
+.ornament::before,.ornament::after{content:"";width:44px;height:1px;background:linear-gradient(90deg,transparent,var(--gold))}
+.ornament::after{background:linear-gradient(270deg,transparent,var(--gold))}
+.ornament b{width:6px;height:6px;transform:rotate(45deg);border:1px solid var(--gold);display:block}
+
+/* ---------- Galeri ---------- */
+.gallery-container{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:30px 8px;padding-top:10px;align-items:start}
+.photo-card:nth-child(3n+2){margin-top:20px} /* kolom kanan sedikit turun, efek mengambang berselang-seling */
+
+/* Lapisan 1: fade + zoom saat scroll */
+.photo-card{
+  position:relative;opacity:1;
+}
+.js .photo-card{
+  opacity:0;transform:translate3d(0,40px,0) scale(.82);filter:blur(5px);
+  transition:opacity 1.2s var(--ease),transform 1.4s var(--ease),filter 1.2s var(--ease);
+  will-change:opacity,transform;
+}
+.js .photo-card.is-visible{opacity:1;transform:none;filter:none}
+
+/* Lapisan 2: mengapung di atas air */
+.float{position:relative;animation:bob 6.5s ease-in-out infinite;animation-delay:var(--fd,0s)}
+.photo-card:nth-child(even) .float{animation-name:bob2}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-.5deg)}50%{transform:translateY(-9px) rotate(.5deg)}}
+@keyframes bob2{0%,100%{transform:translateY(-5px) rotate(.6deg)}50%{transform:translateY(5px) rotate(-.5deg)}}
+
+.polaroid{
+  position:relative;background:var(--paper);padding:5px 5px 8px;border-radius:4px;
+  border:1px solid rgba(184,147,90,.22);
+  box-shadow:0 2px 4px rgba(120,95,60,.08),0 18px 38px -12px rgba(120,95,60,.28);
+}
+.photo-frame{position:relative;aspect-ratio:3/4;overflow:hidden;background:var(--cream-2);border-radius:2px}
+.photo-frame img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.92) contrast(1.02) sepia(.06);transform:scale(1.12);transition:transform 2s var(--ease)}
+.photo-card.is-visible .photo-frame img{transform:scale(1)}
+.photo-frame::after{ /* kilau cahaya di permukaan air */
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%);
+  background-size:250% 100%;background-position:150% 0;animation:shine 7s ease-in-out infinite;animation-delay:var(--fd,0s)
+}
+@keyframes shine{0%,55%{background-position:150% 0}100%{background-position:-60% 0}}
+
+.photo-info{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:7px 2px 0}
+.guest-name{font-family:var(--serif);font-style:italic;font-size:clamp(11px,3.3vw,16px);color:var(--ink);line-height:1.1;overflow-wrap:anywhere}
+.date{font-size:7px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+
+/* Bayangan & riak di permukaan air */
+.shadow{
+  position:absolute;left:12%;right:12%;bottom:-26px;height:22px;border-radius:50%;z-index:-1;
+  background:radial-gradient(ellipse at center,rgba(120,95,60,.28),transparent 70%);
+  animation:shadow 6.5s ease-in-out infinite;animation-delay:var(--fd,0s)
+}
+@keyframes shadow{0%,100%{transform:scaleX(1);opacity:.85}50%{transform:scaleX(.82);opacity:.5}}
+.ripple{
+  position:absolute;left:50%;bottom:-18px;width:70%;aspect-ratio:5/1;margin-left:-35%;z-index:-2;pointer-events:none;
+  border:1px solid var(--gold-soft);border-radius:50%;opacity:0;animation:ripple 6.5s ease-out infinite;animation-delay:var(--fd,0s)
+}
+.ripple.r2{animation-delay:calc(var(--fd,0s) + 2.2s)}
+@keyframes ripple{0%{transform:scale(.55);opacity:0}15%{opacity:.8}100%{transform:scale(1.55);opacity:0}}
+
+/* ---------- State ---------- */
+.empty-state,.loading{grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;line-height:1.9;margin-top:50px;letter-spacing:.03em}
+.empty-state.err{color:#a4572f}
+.empty-state small{display:block;font-size:10px;color:var(--muted);margin-top:6px}
+.loading .drop{display:inline-block;width:14px;height:14px;border:1px solid var(--gold);border-radius:50%;margin-bottom:14px;animation:drop 1.6s ease-out infinite}
+@keyframes drop{0%{transform:scale(.3);opacity:1}100%{transform:scale(2.4);opacity:0}}
+footer{text-align:center;margin-top:70px;font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:var(--muted)}
+
+.photo-card .polaroid{cursor:pointer;transition:box-shadow .5s var(--ease)}
+.photo-card .polaroid:hover{box-shadow:0 2px 4px rgba(120,95,60,.1),0 24px 44px -12px rgba(120,95,60,.38)}
+.photo-card .polaroid:focus-visible{outline:1px solid var(--gold);outline-offset:4px}
+
+/* ---------- Lightbox ---------- */
+.viewer{
+  position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));gap:18px;
+  background:rgba(247,240,228,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  opacity:0;visibility:hidden;transition:opacity .45s var(--ease),visibility 0s .45s;
+}
+.viewer.open{opacity:1;visibility:visible;transition:opacity .45s var(--ease),visibility 0s}
+.viewer-stage{
+  position:relative;max-width:min(100%,560px);max-height:calc(100svh - 190px);display:flex;
+  padding:10px;background:var(--paper);border:1px solid rgba(184,147,90,.25);border-radius:6px;
+  box-shadow:0 30px 60px -20px rgba(120,95,60,.45);
+  transform:scale(.88);opacity:0;transition:transform .6s var(--ease),opacity .6s var(--ease);
+}
+.viewer.open .viewer-stage{transform:none;opacity:1}
+.viewer-stage img{display:block;max-width:100%;max-height:calc(100svh - 210px);object-fit:contain;border-radius:2px}
+.viewer-caption{text-align:center}
+.viewer-caption .v-name{font-family:var(--serif);font-style:italic;font-size:24px;line-height:1.1}
+.viewer-caption .v-date{display:block;margin-top:5px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.viewer-caption{max-width:min(100%,460px)}
+.v-message{
+  display:none;position:relative;margin:14px auto 0;padding:14px 20px;max-height:112px;overflow-y:auto;
+  background:rgba(255,250,241,.85);border:1px solid var(--gold-soft);border-radius:10px;
+  font-family:var(--serif);font-style:italic;font-weight:500;font-size:17px;line-height:1.55;color:var(--ink);
+  white-space:pre-wrap;overflow-wrap:anywhere;text-align:center;
+}
+.v-message::before{content:"\201C";position:absolute;top:-6px;left:10px;font-size:38px;line-height:1;color:var(--gold)}
+.viewer.has-msg .v-message{display:block}
+.viewer.has-msg .viewer-stage{max-height:calc(100svh - 330px)}
+.viewer.has-msg .viewer-stage img{max-height:calc(100svh - 350px)}
+.viewer-actions{display:flex;gap:12px;width:min(100%,420px)}
+.v-btn{
+  flex:1;display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:15px 12px;border-radius:99px;cursor:pointer;
+  font:inherit;font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;text-decoration:none;
+  transition:background .4s var(--ease),color .4s var(--ease),transform .4s var(--ease);
+}
+.v-btn:active{transform:scale(.97)}
+.v-btn.primary{background:var(--gold);color:#fffaf1;border:1px solid var(--gold)}
+.v-btn.primary:hover{background:#a67f48}
+.v-btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--gold-soft)}
+.v-btn.ghost:hover{background:#fff}
+.v-btn[disabled]{opacity:.6;pointer-events:none}
+.toast{position:fixed;left:50%;bottom:28px;z-index:120;transform:translate(-50%,20px);opacity:0;padding:11px 20px;border-radius:99px;background:var(--ink);color:var(--paper);font-size:12px;letter-spacing:.04em;pointer-events:none;transition:opacity .4s var(--ease),transform .4s var(--ease)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media(min-width:700px){
+  .app{padding:22px 28px 80px;max-width:1040px}
+  .gallery-container{grid-template-columns:repeat(4,minmax(0,1fr));gap:44px 18px}
+  .photo-card:nth-child(3n+2){margin-top:0}
+  .photo-card:nth-child(even){margin-top:34px}
+  .polaroid{padding:8px 8px 11px}
+  .guest-name{font-size:clamp(14px,1.7vw,18px)}
+  .date{font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){
+  body::before,.float,.shadow,.ripple,.photo-frame::after{animation:none!important}
+  .viewer-stage{transform:none}
+  .ripple{display:none}
+  .js .photo-card{transform:none;filter:none;transition:opacity 1s ease}
+  .photo-frame img{transform:none;transition:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <a href="index.html" class="back-btn">&larr; Kamera</a>
+    <div class="eyebrow">Galeri momen spesial</div>
+    <h1 class="title">Adhy <i>&amp;</i> Destin</h1>
+    <p class="sub">Potret dari para tamu, mengapung<br>seperti kenangan di permukaan air.</p>
+    <div class="ornament"><b></b></div>
+  </header>
+
+  <div class="gallery-container" id="galleryContainer">
+    <div class="loading" id="loadingText"><span class="drop"></span><br>Memuat galeri foto…</div>
+  </div>
+
+  <footer>Adhy &amp; Destin — A day to remember</footer>
+</div>
+
+<div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="Pratinjau foto" aria-hidden="true">
+  <div class="viewer-stage"><img id="viewerImg" alt="Foto Tamu"></div>
+  <div class="viewer-caption"><span class="v-name" id="viewerName"></span><span class="v-date" id="viewerDate"></span>
+    <p class="v-message" id="viewerMsg"></p></div>
+  <div class="viewer-actions">
+    <button class="v-btn ghost" id="btnBack" type="button">&larr; Kembali</button>
+    <button class="v-btn primary" id="btnDownload" type="button">Unduh Gambar</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+document.documentElement.classList.add('js');
+
+const API_URL = "https://script.google.com/macros/s/AKfycbzyyRyNx3NFHa5UNwcRgSUW2iTL8l6FLFoenCAP05l1cRW8i6vf1COi4x0GLMl7Rvzz/exec";
+
+function esc(v){
+  return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- Fade + zoom saat scroll (berbasis posisi scroll) ---------- */
+let ticking = false;
+function update(){
+  const vh = window.innerHeight || document.documentElement.clientHeight;
+  document.querySelectorAll('.photo-card').forEach(el => {
+    const r = el.getBoundingClientRect();
+    el.classList.toggle('is-visible', r.top < vh * 0.9 && r.bottom > vh * 0.06);
+  });
+  ticking = false;
+}
+function req(){ if(!ticking){ ticking = true; requestAnimationFrame(update); } }
+window.addEventListener('scroll', req, {passive:true});
+window.addEventListener('resize', req);
+window.addEventListener('load', req);
+
+/* ---------- Muat galeri ---------- */
+async function loadGallery(){
+  const container = document.getElementById('galleryContainer');
+  try {
+    const res = await fetch(API_URL, { method:'GET', redirect:'follow' });
+    if (!res.ok) throw new Error('HTTP Error: ' + res.status);
+
+    const data = await res.json();
+    container.innerHTML = '';
+
+    if (!Array.isArray(data) || data.length === 0){
+      container.innerHTML = '<div class="empty-state">Belum ada foto yang di-upload.<br>Jadilah yang pertama mengambil foto! 📸</div>';
+      return;
+    }
+
+    let n = 0;
+    data.reverse().forEach(item => {
+      if (!item.imageUrl) return;
+
+      let dateStr = '';
+      if (item.timestamp){
+        try {
+          dateStr = new Date(item.timestamp).toLocaleString('id-ID', { dateStyle:'medium', timeStyle:'short' });
+        } catch(e){ dateStr = ''; }
+      }
+
+      const card = document.createElement('div');
+      card.className = 'photo-card';
+      card.style.setProperty('--fd', (-(n % 5) * 1.3).toFixed(1) + 's'); // tiap foto bergerak beda fase
+      card.innerHTML = `
+        <div class="float">
+          <span class="ripple"></span><span class="ripple r2"></span>
+          <span class="shadow"></span>
+          <div class="polaroid">
+            <div class="photo-frame"><img src="${esc(cld(item.imageUrl, T_THUMB))}" alt="Foto Tamu" loading="lazy" decoding="async"></div>
+            <div class="photo-info">
+              <span class="guest-name">${esc(item.guestName || 'Tamu Kehormatan')}</span>
+              <span class="date">${esc(dateStr)}</span>
+            </div>
+          </div>
+        </div>`;
+      const pol = card.querySelector('.polaroid');
+      pol.tabIndex = 0;
+      pol.setAttribute('role','button');
+      pol.setAttribute('aria-label','Buka foto ' + (item.guestName || 'Tamu Kehormatan'));
+      card.dataset.src  = item.imageUrl;
+      card.dataset.name = item.guestName || 'Tamu Kehormatan';
+      card.dataset.date = dateStr;
+      card.dataset.message = String(item.message || '').trim();
+      container.appendChild(card);
+      n++;
+    });
+
+    // beri satu frame agar state awal (tersembunyi) dirender, lalu jalankan transisi
+    requestAnimationFrame(() => requestAnimationFrame(update));
+
+  } catch (err){
+    console.error('Fetch error:', err);
+    container.innerHTML = `<div class="empty-state err">Gagal memuat galeri.<small>${esc(err.message)}</small></div>`;
+  }
+}
+
+/* ---------- Hemat bandwidth: Cloudinary f_auto,q_auto ---------- */
+function cld(url, t){
+  const m = '/image/upload/';
+  return (typeof url === 'string' && url.includes('res.cloudinary.com') && url.includes(m) && !url.includes(m + 'f_auto'))
+    ? url.replace(m, m + t + '/') : url;
+}
+const T_THUMB = 'f_auto,q_auto:eco,w_400,c_limit';   // kartu grid (kecil)
+const T_VIEW  = 'f_auto,q_auto,w_1080,c_limit';      // foto besar saat di-tap
+
+/* ---------- Pratinjau foto + unduh ---------- */
+const viewer = document.getElementById('viewer');
+const vImg = document.getElementById('viewerImg');
+const vName = document.getElementById('viewerName');
+const vDate = document.getElementById('viewerDate');
+const vMsg = document.getElementById('viewerMsg');
+const btnDownload = document.getElementById('btnDownload');
+const toastEl = document.getElementById('toast');
+let current = null, lastFocus = null, toastTimer;
+
+function toast(msg){
+  toastEl.textContent = msg; toastEl.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
+}
+function openViewer(card){
+  current = { src: card.dataset.src, name: card.dataset.name, date: card.dataset.date, message: card.dataset.message || '' };
+  vImg.src = cld(current.src, T_VIEW);   // unduh tetap memakai file asli (current.src)
+  vName.textContent = current.name;
+  vDate.textContent = current.date;
+  vMsg.textContent = current.message;
+  viewer.classList.toggle('has-msg', !!current.message);
+  vMsg.scrollTop = 0;
+  lastFocus = document.activeElement;
+  viewer.classList.add('open'); viewer.setAttribute('aria-hidden','false');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('btnBack').focus({preventScroll:true});
+}
+function closeViewer(){
+  viewer.classList.remove('open'); viewer.setAttribute('aria-hidden','true');
+  document.body.style.overflow = '';
+  if (lastFocus && lastFocus.focus) lastFocus.focus({preventScroll:true});
+}
+async function downloadImage(){
+  if (!current) return;
+  const base = ('foto-' + current.name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'foto';
+  btnDownload.disabled = true; btnDownload.textContent = 'Mengunduh…';
+  try {
+    const res = await fetch(current.src, { redirect:'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const blob = await res.blob();
+    const ext = (blob.type.split('/')[1] || 'jpg').replace('jpeg','jpg').split('+')[0];
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = base + '.' + ext;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast('Gambar berhasil diunduh');
+  } catch (e) {
+    // Cadangan: server gambar tidak mengizinkan unduh langsung -> buka gambar asli di tab baru
+    const a = document.createElement('a');
+    a.href = current.src; a.download = base + '.jpg'; a.target = '_blank'; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+    toast('Gambar dibuka di tab baru. Tahan gambar lalu pilih Simpan.');
+  } finally {
+    btnDownload.disabled = false; btnDownload.textContent = 'Unduh Gambar';
+  }
+}
+
+document.getElementById('galleryContainer').addEventListener('click', e => {
+  const card = e.target.closest('.photo-card');
+  if (card && card.dataset.src) openViewer(card);
+});
+document.getElementById('galleryContainer').addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('polaroid')){
+    e.preventDefault(); openViewer(e.target.closest('.photo-card'));
+  }
+});
+document.getElementById('btnBack').addEventListener('click', closeViewer);
+btnDownload.addEventListener('click', downloadImage);
+viewer.addEventListener('click', e => { if (e.target === viewer) closeViewer(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && viewer.classList.contains('open')) closeViewer(); });
+
+loadGallery();
+</script>
+</body>
+</html>
